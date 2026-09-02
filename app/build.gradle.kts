@@ -1,6 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+
+    // Enables @Serializable classes/objects
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -46,6 +49,14 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+
+    // Adds Jetpack Compose Navigation.
+    // Used for NavHost, NavController and moving between screens
+    implementation(libs.androidx.navigation.compose)
+
+    // Serialization runtime used by our type safe @Serializable navigation routes
+    implementation(libs.kotlinx.serialization.json)
+
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
