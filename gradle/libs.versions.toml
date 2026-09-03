@@ -15,6 +15,12 @@ navigation = "2.9.5"
 # JSON serialization is required by Navigation for @Serializable type safe routes
 serialization = "1.7.3"
 
+# room version used for local SQLite database storage
+room = "2.8.4"
+
+# ksp generates the Room database implementation from our annotations
+ksp = "2.3.6"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -38,6 +44,16 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 # Kotlin serialization runtime used by @Serializable navigation routes
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 
+# core Room runtime used by the app for database access
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+
+# kotlin extensions for room, including support for suspend functions and flow
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+
+# Room compiler reads annotations like @Entity, @Dao and @Database
+# and generates the required database code during the build
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
@@ -45,4 +61,7 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 # Enables Kotlin Serialization
 # Needed so @Serializable route objects can be used for type safe Navigation
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
+# kotlin symbol processing is used by room to generate code from annotations
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 

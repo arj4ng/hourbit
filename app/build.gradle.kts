@@ -2,8 +2,11 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 
-    // Enables @Serializable classes/objects
+    // enables @Serializable classes/objects
     alias(libs.plugins.kotlin.serialization)
+
+    // enables code generation used by Room
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -50,12 +53,22 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // Adds Jetpack Compose Navigation.
-    // Used for NavHost, NavController and moving between screens
+    // adds Jetpack Compose Navigation
+    // used for NavHost, NavController and moving between screens
     implementation(libs.androidx.navigation.compose)
 
-    // Serialization runtime used by our type safe @Serializable navigation routes
+    // serialization runtime used by my type safe @Serializable navigation routes
     implementation(libs.kotlinx.serialization.json)
+
+    // room runtime gives the app access to the local database API.
+    implementation(libs.androidx.room.runtime)
+
+    // kotlin extensions for Room, used for coroutines and Flow
+    implementation(libs.androidx.room.ktx)
+
+    // room compiler processes @Entity, @Dao and @Database annotations
+    // ksp() means this dependency is used for code generation, not bundled into the app
+    ksp(libs.androidx.room.compiler)
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
