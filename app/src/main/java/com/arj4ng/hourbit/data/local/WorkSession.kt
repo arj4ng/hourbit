@@ -17,7 +17,8 @@ import androidx.room.PrimaryKey
 
 // represents one completed work session in Hourbit
 // stores when the session started and ended
-@Entity(tableName = "work_sessions")
+@Entity(tableName = "work_sessions") // Entity = table in the Room database
+// each WorkSession object becomes one row in work_sessions
 data class WorkSession(
     // primary key uniquely identifies each saved session
     @PrimaryKey(autoGenerate = true)
