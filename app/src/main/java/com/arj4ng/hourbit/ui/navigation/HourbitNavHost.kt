@@ -18,6 +18,7 @@ import com.arj4ng.hourbit.data.location.LocationProvider
 import com.arj4ng.hourbit.ui.home.HomeViewModelFactory
 import com.arj4ng.hourbit.ui.history.HistoryViewModel
 import com.arj4ng.hourbit.ui.history.HistoryViewModelFactory
+import com.arj4ng.hourbit.data.remote.RetrofitClient
 
 
 /*
@@ -46,9 +47,10 @@ fun HourbitNavHost() {
     // get the reusable Room database instance
     val database = DatabaseProvider.getDatabase(context)
 
-    // repository gets access to WorkSession database operations
+    // repository gets local Room access and remote weather API access
     val repository = WorkSessionRepository(
-        database.workSessionDao()
+        database.workSessionDao(),
+        RetrofitClient.weatherApi // provide the retrofit WeatherApi implementation
     )
 
     // give LocationProvider access to the android context

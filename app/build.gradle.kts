@@ -72,6 +72,10 @@ dependencies {
     implementation(libs.google.play.services.location)
     implementation(libs.kotlinx.coroutines.play.services)
 
+    // api retrofit
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+
     // room compiler processes @Entity, @Dao and @Database annotations
     // ksp() means this dependency is used for code generation, not bundled into the app
     ksp(libs.androidx.room.compiler)

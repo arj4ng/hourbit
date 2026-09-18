@@ -26,6 +26,11 @@ data class WorkSession(
     val startTime: Long,
     val endTime: Long,
     // Long = 64bit integer type that can later be converted to date and time (timestamps)
+
     val latitude: Double? = null, // coordinates for where the session ended
-    val longitude: Double? = null // nullable because location is optional
+    val longitude: Double? = null, // nullable because location is optional
+
+    // optional weather data saved with the session
+    val temperature: Double? = null, // nullable because weather is optional too
+    val weatherCode: Int? = null
 )

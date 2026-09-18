@@ -57,12 +57,16 @@ fun HomeScreen(
         )
     }
 
-    // opens android's location permission dialog
+// opens android's location permission dialog
     val locationPermissionLauncher =
-        rememberLauncherForActivityResult( // launche a system action and receives its result
-            contract = ActivityResultContracts.RequestPermission() // define this launcher as a single permission request
-        ) { isGranted -> // result after the user answers the permission
-            hasLocationPermission = isGranted // update permission state with the users choice
+        rememberLauncherForActivityResult( // launch a system action and receives its result
+            contract = ActivityResultContracts.RequestMultiplePermissions() // define this launcher as a multiple permission request
+        ) { permissions -> // result after the user answers the permissions
+
+            hasLocationPermission =
+                permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                        permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            // update permission state if either precise or approximate location was granted
         }
 
     Column(
@@ -99,8 +103,10 @@ fun HomeScreen(
             Button(
                 onClick = {
                     locationPermissionLauncher.launch( // open androids permission dialog
-                        Manifest.permission.ACCESS_FINE_LOCATION // request precise location access
-                    )
+                        arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION, // request precise location access
+                            Manifest.permission.ACCESS_COARSE_LOCATION // request corse location access
+                    ))
                 }
             ) {
                 Text(text = "Allow location")

@@ -28,6 +28,9 @@ lifecycleRuntimeCompose = "2.9.4"
 playServicesLocation = "21.3.0"
 coroutinesPlayServices = "1.10.2"
 
+# api retrofit dependencies version
+retrofit = "2.11.0"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -67,6 +70,10 @@ androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lif
 #location dependency library
 google-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutinesPlayServices" }
+
+# api retrofit libraries
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
