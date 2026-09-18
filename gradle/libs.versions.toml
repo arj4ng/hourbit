@@ -21,6 +21,9 @@ room = "2.8.4"
 # ksp generates the Room database implementation from our annotations
 ksp = "2.3.6"
 
+lifecycleViewModelCompose = "2.9.4"
+lifecycleRuntimeCompose = "2.9.4"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -54,6 +57,9 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 # and generates the required database code during the build
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewModelCompose" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
@@ -64,4 +70,3 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 
 # kotlin symbol processing is used by room to generate code from annotations
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-
