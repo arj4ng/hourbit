@@ -10,6 +10,11 @@ import androidx.navigation.compose.rememberNavController
 import com.arj4ng.hourbit.ui.history.HistoryScreen
 import com.arj4ng.hourbit.ui.home.HomeScreen
 import com.arj4ng.hourbit.ui.home.HomeViewModel
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.arj4ng.hourbit.data.WorkSessionRepository
+import com.arj4ng.hourbit.data.local.DatabaseProvider
+import com.arj4ng.hourbit.ui.home.HomeViewModelFactory
 
 
 /*
@@ -32,8 +37,24 @@ fun HourbitNavHost() {
     // navController manages which screen is currently shown and the back stack
     val navController = rememberNavController()
 
+    // provide Android context inside Compose
+    val context = LocalContext.current
+
+    // get the reusable Room database instance
+    val database = DatabaseProvider.getDatabase(context)
+
+    // repository gets access to WorkSession database operations
+    val repository = WorkSessionRepository(
+        database.workSessionDao()
+    )
+
+    // factory can now create HomeViewModel with the repository
+    val factory = HomeViewModelFactory(repository)
+
     // create or return the HomeViewModel for this screen
-    val homeViewModel: HomeViewModel = viewModel()
+    val homeViewModel: HomeViewModel = viewModel(
+        factory = factory
+    )
 
     // observe the ViewModel state and converts it into compose state
     val elapsedSeconds by homeViewModel.elapsedSeconds.collectAsStateWithLifecycle() // use my state flow from viewmodel with compose
