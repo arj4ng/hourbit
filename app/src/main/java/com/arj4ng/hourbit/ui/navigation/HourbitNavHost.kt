@@ -15,6 +15,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.arj4ng.hourbit.data.WorkSessionRepository
 import com.arj4ng.hourbit.data.local.DatabaseProvider
 import com.arj4ng.hourbit.ui.home.HomeViewModelFactory
+import com.arj4ng.hourbit.ui.history.HistoryViewModel
+import com.arj4ng.hourbit.ui.history.HistoryViewModelFactory
 
 
 /*
@@ -61,6 +63,17 @@ fun HourbitNavHost() {
     // so if state changes.. ui changes automatically
     val isRunning by homeViewModel.isRunning.collectAsStateWithLifecycle()
 
+    // creates HistoryViewModel with the repository
+    val historyFactory = HistoryViewModelFactory(repository)
+
+    // gets the HistoryViewModel using the custom factory
+    val historyViewModel: HistoryViewModel = viewModel(
+        factory = historyFactory
+    )
+
+    // observes saved sessions from the ViewModel
+    val workSessions by historyViewModel.workSessions.collectAsStateWithLifecycle()
+
     // NavHost is the container that displays the current navigation destination
     // Hourbit starts on HomeRoute when the app is opened
     NavHost(
@@ -86,6 +99,7 @@ fun HourbitNavHost() {
         // connects HistoryRoute to HistoryScreen
         composable<HistoryRoute> {
             HistoryScreen(
+                workSessions = workSessions,
                 onBack = {
                     navController.popBackStack()
                 }
