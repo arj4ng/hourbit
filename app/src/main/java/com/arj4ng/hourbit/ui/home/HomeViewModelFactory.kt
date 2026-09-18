@@ -3,6 +3,7 @@ package com.arj4ng.hourbit.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.arj4ng.hourbit.data.WorkSessionRepository
+import com.arj4ng.hourbit.data.location.LocationProvider
 
 /*
   ╔════════════════════════════════════════════════════════╗
@@ -22,7 +23,8 @@ import com.arj4ng.hourbit.data.WorkSessionRepository
 // create HomeViewModel with the dependencies it needs
 class HomeViewModelFactory(
     // repository that will be passed into HomeViewModel
-    private val repository: WorkSessionRepository
+    private val repository: WorkSessionRepository,
+    private val locationProvider: LocationProvider
 
     // follow Android’s standard interface for creating ViewModels
 ) : ViewModelProvider.Factory { // = an Android Lifecycle API type
@@ -33,7 +35,10 @@ class HomeViewModelFactory(
         // checks whether HomeViewModel was requested
         if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST") // suppresses generic type cast warning
-            return HomeViewModel(repository) as T // create HomeViewModel and give it the repository
+            return HomeViewModel(
+                repository,
+                locationProvider
+            ) as T // create HomeViewModel and give it the repository
         }
 
         // fails if this factory receives an unsupported ViewModel type

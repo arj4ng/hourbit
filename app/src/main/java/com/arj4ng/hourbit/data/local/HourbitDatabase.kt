@@ -18,7 +18,7 @@ import androidx.room.RoomDatabase
 // WorkSession is registered as an entity of this database
 @Database(
     entities = [WorkSession::class],
-    version = 1, // Database schema version
+    version = 2, // Database schema version
     exportSchema = false // export is disabled because schema history is not needed yet
 )
 

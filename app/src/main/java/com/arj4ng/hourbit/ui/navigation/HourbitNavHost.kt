@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.arj4ng.hourbit.data.WorkSessionRepository
 import com.arj4ng.hourbit.data.local.DatabaseProvider
+import com.arj4ng.hourbit.data.location.LocationProvider
 import com.arj4ng.hourbit.ui.home.HomeViewModelFactory
 import com.arj4ng.hourbit.ui.history.HistoryViewModel
 import com.arj4ng.hourbit.ui.history.HistoryViewModelFactory
@@ -50,8 +51,14 @@ fun HourbitNavHost() {
         database.workSessionDao()
     )
 
+    // give LocationProvider access to the android context
+    val locationProvider = LocationProvider(context)
+
     // factory can now create HomeViewModel with the repository
-    val factory = HomeViewModelFactory(repository)
+    val factory = HomeViewModelFactory(
+        repository,
+        locationProvider
+    )
 
     // create or return the HomeViewModel for this screen
     val homeViewModel: HomeViewModel = viewModel(
@@ -73,6 +80,8 @@ fun HourbitNavHost() {
 
     // observes saved sessions from the ViewModel
     val workSessions by historyViewModel.workSessions.collectAsStateWithLifecycle()
+
+
 
     // NavHost is the container that displays the current navigation destination
     // Hourbit starts on HomeRoute when the app is opened

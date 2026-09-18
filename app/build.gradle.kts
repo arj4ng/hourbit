@@ -68,6 +68,10 @@ dependencies {
     // kotlin extensions for Room, used for coroutines and Flow
     implementation(libs.androidx.room.ktx)
 
+    // location API for getting device location
+    implementation(libs.google.play.services.location)
+    implementation(libs.kotlinx.coroutines.play.services)
+
     // room compiler processes @Entity, @Dao and @Database annotations
     // ksp() means this dependency is used for code generation, not bundled into the app
     ksp(libs.androidx.room.compiler)

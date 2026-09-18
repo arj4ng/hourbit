@@ -30,7 +30,9 @@ object DatabaseProvider {
                 context.applicationContext,
                 HourbitDatabase::class.java,
                 "hourbit_database"
-            ).build()
+            )
+                .fallbackToDestructiveMigration(dropAllTables = true) // drops old tables and recreates the database if no migration exists
+                .build()
             INSTANCE = instance
             instance
         }

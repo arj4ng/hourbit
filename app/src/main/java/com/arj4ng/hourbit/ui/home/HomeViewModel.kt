@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.arj4ng.hourbit.data.location.LocationProvider
 
 /*
   ╔════════════════════════════════════════════════════════╗
@@ -26,7 +27,8 @@ import kotlinx.coroutines.launch
 // UI observes this state instead of managing the timer itself
 class HomeViewModel(
     // give off work to the repository instead of doing saving in viewModel
-    private val repository: WorkSessionRepository
+    private val repository: WorkSessionRepository,
+    private val locationProvider: LocationProvider
 ) : ViewModel() {
 
     private val _elapsedSeconds = MutableStateFlow(0L) // internal mutable state. only the ViewModel can change it
@@ -54,7 +56,7 @@ class HomeViewModel(
 
     // stops the currently running timer
     fun stopTimer() {
-        if (!_isRunning.value) return // if the timer is not running, stop and do nothing
+        if (!_isRunning.value) return // if the timer is not running stop and do nothing
         _isRunning.value = false
 
         // if startTime contains a value, use it
@@ -62,14 +64,24 @@ class HomeViewModel(
         val sessionStartTime = startTime ?: return
 
         val endTime = System.currentTimeMillis()
-        val workSession = WorkSession(
 
-            // create a new WorkSession object for entitiy fields
-            startTime = sessionStartTime,
-            endTime = endTime
-        )
         // save the object
         viewModelScope.launch {
+
+            // get the last known device location
+            val coordinates = locationProvider.getCurrentLocation()
+
+            val workSession = WorkSession(
+
+                // create a new WorkSession object for entitiy fields
+                startTime = sessionStartTime,
+                endTime = endTime,
+                latitude = coordinates?.first,
+                longitude = coordinates?.second
+                // if coordinates exists → use latitude/longitude
+                //if coordinates is null → save null
+            )
+
             repository.insertWorkSession(workSession)
         }
     }

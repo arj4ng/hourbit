@@ -1,6 +1,5 @@
 package com.arj4ng.hourbit.ui.home
 
-import android.text.format.DateUtils.formatElapsedTime
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +10,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.arj4ng.hourbit.ui.theme.HourbitTheme
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 /*
   ╔════════════════════════════════════════════════════════╗
@@ -34,6 +43,28 @@ fun HomeScreen(
     onResetTimer: () -> Unit,
     onOpenHistory: () -> Unit
 ) {
+
+    // give this composable access to the current android context
+    val context = LocalContext.current
+
+    // track whether location permission is already granted
+    var hasLocationPermission by remember { // compose state so the UI updates when permission status changes
+        mutableStateOf( // compose state that triggers UI updates when the value changes
+            ContextCompat.checkSelfPermission( // check whether the app already has location permission
+                context, // checks precise location permission
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED // true when the permission has already been granted
+        )
+    }
+
+    // opens android's location permission dialog
+    val locationPermissionLauncher =
+        rememberLauncherForActivityResult( // launche a system action and receives its result
+            contract = ActivityResultContracts.RequestPermission() // define this launcher as a single permission request
+        ) { isGranted -> // result after the user answers the permission
+            hasLocationPermission = isGranted // update permission state with the users choice
+        }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -63,6 +94,19 @@ fun HomeScreen(
             Text(text = "Reset")
         }
 
+        // ask for location permission when it has not been granted yet
+        if (!hasLocationPermission) {
+            Button(
+                onClick = {
+                    locationPermissionLauncher.launch( // open androids permission dialog
+                        Manifest.permission.ACCESS_FINE_LOCATION // request precise location access
+                    )
+                }
+            ) {
+                Text(text = "Allow location")
+            }
+        }
+
         // navigation is passed into the screen as a callback
         // keeps HomeScreen independent from NavController
         Button(
@@ -84,8 +128,6 @@ private fun formatElapsedTime(totalSeconds: Long): String {
         seconds
     )
 }
-
-
 
 
 @Preview(showBackground = true)
