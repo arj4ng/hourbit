@@ -37,6 +37,10 @@ class HomeViewModel(
     private val _isRunning = MutableStateFlow(false) // stores whether a work session is currently running
     val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow() // read only running state exposed to the UI
 
+    // optional error message shown by the UI
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     // store when the current work session started
     private var startTime: Long? = null // nullable for not started state
 
@@ -44,6 +48,7 @@ class HomeViewModel(
     fun startTimer() {
         if (_isRunning.value) return
 
+        _errorMessage.value = null
         startTime = System.currentTimeMillis() // returns the current time as a timestamp in milliseconds
         _elapsedSeconds.value = 0L // resets the visible timer when a new work session begins
         _isRunning.value = true
@@ -83,6 +88,11 @@ class HomeViewModel(
                 null
             }
 
+            if (coordinates == null) {
+                _errorMessage.value =
+                    "Location unavailable. Session will be saved without location."
+            }
+
             // get weather only when coordinates are available
             val weather = if (coordinates != null) {
                 try {
@@ -105,6 +115,11 @@ class HomeViewModel(
                 null
             }
 
+            if (coordinates != null && weather == null) {
+                _errorMessage.value =
+                    "Weather unavailable. Session will be saved without weather."
+            }
+
             val workSession = WorkSession(
 
                 // create a new WorkSession object for entity fields
@@ -123,8 +138,17 @@ class HomeViewModel(
             )
 
             // save the object even if location or weather failed
-            repository.insertWorkSession(workSession)
+            try {
+                repository.insertWorkSession(workSession)
+            } catch (e: Exception) {
+                _errorMessage.value = "Could not save work session."
+            }
         }
+    }
+
+    // clears an error after the user has seen it
+    fun clearErrorMessage() {
+        _errorMessage.value = null
     }
 
     // resets the timer back to zero

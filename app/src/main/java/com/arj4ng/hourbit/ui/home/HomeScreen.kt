@@ -41,7 +41,9 @@ fun HomeScreen(
     onStartTimer: () -> Unit,
     onStopTimer: () -> Unit,
     onResetTimer: () -> Unit,
-    onOpenHistory: () -> Unit
+    onOpenHistory: () -> Unit,
+    errorMessage: String?,
+    onDismissError: () -> Unit
 ) {
 
     // give this composable access to the current android context
@@ -51,9 +53,13 @@ fun HomeScreen(
     var hasLocationPermission by remember { // compose state so the UI updates when permission status changes
         mutableStateOf( // compose state that triggers UI updates when the value changes
             ContextCompat.checkSelfPermission( // check whether the app already has location permission
-                context, // checks precise location permission
+                context,
                 Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED // true when the permission has already been granted
+            ) == PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
         )
     }
 
@@ -113,6 +119,22 @@ fun HomeScreen(
             }
         }
 
+        // location is optional, so the app still works when permission is denied
+        if (!hasLocationPermission) {
+            Text(text = "Location is optional. Sessions can still be saved.")
+        }
+
+        // show understandable errors instead of crashing
+        if (errorMessage != null) {
+            Text(text = errorMessage)
+
+            Button(
+                onClick = onDismissError
+            ) {
+                Text(text = "Dismiss")
+            }
+        }
+
         // navigation is passed into the screen as a callback
         // keeps HomeScreen independent from NavController
         Button(
@@ -146,7 +168,9 @@ fun HomeScreenPreview() {
             onStartTimer = {},
             onStopTimer = {},
             onResetTimer = {},
-            onOpenHistory = {}
+            onOpenHistory = {},
+            errorMessage = null,
+            onDismissError = {}
         )
     }
 }

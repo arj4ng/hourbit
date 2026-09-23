@@ -11,7 +11,6 @@ import com.arj4ng.hourbit.ui.history.HistoryScreen
 import com.arj4ng.hourbit.ui.home.HomeScreen
 import com.arj4ng.hourbit.ui.home.HomeViewModel
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.arj4ng.hourbit.data.WorkSessionRepository
 import com.arj4ng.hourbit.data.local.DatabaseProvider
 import com.arj4ng.hourbit.data.location.LocationProvider
@@ -72,6 +71,9 @@ fun HourbitNavHost() {
     // so if state changes.. ui changes automatically
     val isRunning by homeViewModel.isRunning.collectAsStateWithLifecycle()
 
+    // observe optional error messages from HomeViewModel
+    val errorMessage by homeViewModel.errorMessage.collectAsStateWithLifecycle()
+
     // creates HistoryViewModel with the repository
     val historyFactory = HistoryViewModelFactory(repository)
 
@@ -102,7 +104,9 @@ fun HourbitNavHost() {
                 onResetTimer = homeViewModel::resetTimer,
                 onOpenHistory = {
                     navController.navigate(HistoryRoute)
-                }
+                },
+                errorMessage = errorMessage,
+                onDismissError = homeViewModel::clearErrorMessage
             )
         }
 
