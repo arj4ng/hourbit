@@ -36,6 +36,11 @@ class WorkSessionRepository(
         return workSessionDao.getAllWorkSessions()
     }
 
+    // delete one saved work session
+    suspend fun deleteWorkSession(workSession: WorkSession) {
+        workSessionDao.deleteWorkSession(workSession)
+    }
+
     // get current weather for the given coordinates
     suspend fun getCurrentWeather(
         latitude: Double,
