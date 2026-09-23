@@ -3,6 +3,7 @@ package com.arj4ng.hourbit.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arj4ng.hourbit.data.WorkSessionRepository
+import com.arj4ng.hourbit.data.local.SessionStateStore
 import com.arj4ng.hourbit.data.local.WorkSession
 import com.arj4ng.hourbit.data.location.LocationProvider
 import kotlinx.coroutines.delay
@@ -12,150 +13,404 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
-/*
-  ╔════════════════════════════════════════════════════════╗
-  ║  █████╗ ██████╗      ██╗ ██╗  ██╗ ███╗   ██╗  ██████╗  ║
-  ║ ██╔══██╗██╔══██╗     ██║ ██║  ██║ ████╗  ██║ ██╔════╝  ║
-  ║ ███████║██████╔╝     ██║ ███████║ ██╔██╗ ██║ ██║  ███╗ ║
-  ║ ██╔══██║██╔══██╗██   ██║ ╚════██║ ██║╚██╗██║ ██║   ██║ ║
-  ║ ██║  ██║██║  ██║╚█████╔╝      ██║ ██║ ╚████║ ╚██████╔╝ ║
-  ║ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚════╝       ╚═╝ ╚═╝  ╚═══╝  ╚═════╝  ║
-  ╚═════════════════════════════════════════ [ DEV TAG ] ══╝
-*/
-
-// the timer state and logic for the Home screen
-// UI observes this state instead of managing the timer itself
 class HomeViewModel(
-    // give off work to the repository instead of doing saving in viewModel
     private val repository: WorkSessionRepository,
-    private val locationProvider: LocationProvider
+    private val locationProvider: LocationProvider,
+    private val sessionStateStore: SessionStateStore
 ) : ViewModel() {
 
-    private val _elapsedSeconds = MutableStateFlow(0L) // internal mutable state. only the ViewModel can change it
-    val elapsedSeconds: StateFlow<Long> = _elapsedSeconds.asStateFlow() // read only state exposed to the UI
+    private val _elapsedSeconds =
+        MutableStateFlow(0L)
 
-    private val _isRunning = MutableStateFlow(false) // stores whether a work session is currently running
-    val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow() // read only running state exposed to the UI
+    val elapsedSeconds: StateFlow<Long> =
+        _elapsedSeconds.asStateFlow()
 
-    // optional error message shown by the UI
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    private val _isRunning =
+        MutableStateFlow(false)
 
-    // store when the current work session started
-    private var startTime: Long? = null // nullable for not started state
+    val isRunning: StateFlow<Boolean> =
+        _isRunning.asStateFlow()
 
-    // starts the timer if it is not already running
-    fun startTimer() {
-        if (_isRunning.value) return
+    private val _isOnBreak =
+        MutableStateFlow(false)
 
-        _errorMessage.value = null
-        startTime = System.currentTimeMillis() // returns the current time as a timestamp in milliseconds
-        _elapsedSeconds.value = 0L // resets the visible timer when a new work session begins
-        _isRunning.value = true
+    val isOnBreak: StateFlow<Boolean> =
+        _isOnBreak.asStateFlow()
+
+    private val _breakSeconds =
+        MutableStateFlow(0L)
+
+    val breakSeconds: StateFlow<Long> =
+        _breakSeconds.asStateFlow()
+
+    private val _errorMessage =
+        MutableStateFlow<String?>(null)
+
+    val errorMessage: StateFlow<String?> =
+        _errorMessage.asStateFlow()
+
+    private var startTime: Long? = null
+
+    private var breakStartTime: Long? = null
+
+    private var accumulatedBreakSeconds =
+        0L
+
+    init {
+        restoreSession()
 
         viewModelScope.launch {
-            while (_isRunning.value) {
+            while (true) {
+                updateTimers()
                 delay(1000)
-                _elapsedSeconds.value++
             }
         }
     }
 
-    // stops the currently running timer
+    private fun restoreSession() {
+
+        if (!sessionStateStore.isRunning()) {
+            return
+        }
+
+        val savedStartTime =
+            sessionStateStore.getStartTime()
+
+        if (savedStartTime <= 0L) {
+            sessionStateStore.clearSession()
+            return
+        }
+
+        startTime =
+            savedStartTime
+
+        breakStartTime =
+            sessionStateStore.getBreakStartTime()
+
+        accumulatedBreakSeconds =
+            sessionStateStore.getBreakSeconds()
+
+        _isRunning.value =
+            true
+
+        _isOnBreak.value =
+            sessionStateStore.isOnBreak()
+
+        updateTimers()
+    }
+
+    private fun updateTimers() {
+
+        if (!_isRunning.value) {
+            return
+        }
+
+        val sessionStart =
+            startTime ?: return
+
+        val now =
+            System.currentTimeMillis()
+
+        var totalBreakSeconds =
+            accumulatedBreakSeconds
+
+        if (_isOnBreak.value) {
+
+            val breakStart =
+                breakStartTime
+
+            if (breakStart != null) {
+
+                totalBreakSeconds +=
+                    (
+                        now -
+                        breakStart
+                    ) / 1000
+            }
+        }
+
+        val totalSessionSeconds =
+            (
+                now -
+                sessionStart
+            ) / 1000
+
+        _breakSeconds.value =
+            totalBreakSeconds
+
+        _elapsedSeconds.value =
+            (
+                totalSessionSeconds -
+                totalBreakSeconds
+            ).coerceAtLeast(0L)
+    }
+
+    fun startTimer() {
+
+        if (_isRunning.value) {
+            return
+        }
+
+        _errorMessage.value =
+            null
+
+        val now =
+            System.currentTimeMillis()
+
+        startTime =
+            now
+
+        breakStartTime =
+            null
+
+        accumulatedBreakSeconds =
+            0L
+
+        _elapsedSeconds.value =
+            0L
+
+        _breakSeconds.value =
+            0L
+
+        _isOnBreak.value =
+            false
+
+        _isRunning.value =
+            true
+
+        sessionStateStore.saveSession(
+            startTime = now,
+            breakStartTime = null,
+            accumulatedBreakSeconds = 0L,
+            isOnBreak = false
+        )
+    }
+
+    fun startBreak() {
+
+        if (!_isRunning.value) {
+            return
+        }
+
+        if (_isOnBreak.value) {
+            return
+        }
+
+        breakStartTime =
+            System.currentTimeMillis()
+
+        _isOnBreak.value =
+            true
+
+        sessionStateStore.updateBreak(
+            breakStartTime =
+                breakStartTime,
+            accumulatedBreakSeconds =
+                accumulatedBreakSeconds,
+            isOnBreak =
+                true
+        )
+
+        updateTimers()
+    }
+
+    fun resumeWork() {
+
+        if (!_isRunning.value) {
+            return
+        }
+
+        if (!_isOnBreak.value) {
+            return
+        }
+
+        val breakStart =
+            breakStartTime
+
+        if (breakStart != null) {
+
+            accumulatedBreakSeconds +=
+                (
+                    System.currentTimeMillis() -
+                    breakStart
+                ) / 1000
+        }
+
+        breakStartTime =
+            null
+
+        _isOnBreak.value =
+            false
+
+        sessionStateStore.updateBreak(
+            breakStartTime =
+                null,
+            accumulatedBreakSeconds =
+                accumulatedBreakSeconds,
+            isOnBreak =
+                false
+        )
+
+        updateTimers()
+    }
+
     fun stopTimer() {
-        if (!_isRunning.value) return // if the timer is not running stop and do nothing
-        _isRunning.value = false
 
-        // if startTime contains a value, use it
-        // if it is null, leave stopTimer()
-        val sessionStartTime = startTime ?: return
+        if (!_isRunning.value) {
+            return
+        }
 
-        val endTime = System.currentTimeMillis()
+        updateTimers()
 
-        // save the object
+        val sessionStartTime =
+            startTime ?: return
+
+        val endTime =
+            System.currentTimeMillis()
+
+        val sessionBreakSeconds =
+            _breakSeconds.value
+
+        _isRunning.value =
+            false
+
+        _isOnBreak.value =
+            false
+
+        sessionStateStore.clearSession()
+
         viewModelScope.launch {
 
-            // tries to get location, returns null if it fails
-            val coordinates = try {
+            val coordinates =
+                try {
 
-                // wait max 5 seconds for location, then continue without it
-                withTimeoutOrNull(5000) {
-                    locationProvider.getCurrentLocation()
+                    withTimeoutOrNull(5000) {
+                        locationProvider
+                            .getCurrentLocation()
+                    }
+
+                } catch (e: Exception) {
+                    null
                 }
 
-                // if location request fails, continue without location
-            } catch (e: Exception) {
-                null
-            }
-
             if (coordinates == null) {
+
                 _errorMessage.value =
                     "Location unavailable. Session will be saved without location."
             }
 
-            // get weather only when coordinates are available
-            val weather = if (coordinates != null) {
-                try {
+            val cityName =
+                if (coordinates != null) {
 
-                    // request weather for the current coordinates
-                    // wait max 5 seconds for weather, then continue without it
-                    withTimeoutOrNull(5000) {
-                        repository.getCurrentWeather(
-                            latitude = coordinates.first,
-                            longitude = coordinates.second
-                        )
+                    try {
+                        withTimeoutOrNull(5000) {
+                            locationProvider.getCityName(
+                                latitude = coordinates.first,
+                                longitude = coordinates.second
+                            )
+                        }
+                    } catch (e: Exception) {
+                        null
                     }
 
-                    // if the API request fails, continue without weather
-                } catch (e: Exception) {
+                } else {
                     null
                 }
-            } else {
-                // no coordinates means no weather request
-                null
-            }
 
-            if (coordinates != null && weather == null) {
+            val weather =
+                if (coordinates != null) {
+
+                    try {
+
+                        withTimeoutOrNull(5000) {
+
+                            repository
+                                .getCurrentWeather(
+                                    latitude =
+                                        coordinates.first,
+                                    longitude =
+                                        coordinates.second
+                                )
+                        }
+
+                    } catch (e: Exception) {
+                        null
+                    }
+
+                } else {
+                    null
+                }
+
+            if (
+                coordinates != null &&
+                weather == null
+            ) {
+
                 _errorMessage.value =
                     "Weather unavailable. Session will be saved without weather."
             }
 
-            val workSession = WorkSession(
+            val workSession =
+                WorkSession(
+                    startTime =
+                        sessionStartTime,
+                    endTime =
+                        endTime,
+                    breakDurationSeconds =
+                        sessionBreakSeconds,
+                    latitude =
+                        coordinates?.first,
+                    longitude =
+                        coordinates?.second,
+                    cityName =
+                        cityName,
+                    temperature =
+                        weather?.temperature_2m,
+                    weatherCode =
+                        weather?.weather_code
+                )
 
-                // create a new WorkSession object for entity fields
-                startTime = sessionStartTime,
-                endTime = endTime,
-
-                latitude = coordinates?.first,
-                longitude = coordinates?.second,
-                // if coordinates exists → use latitude/longitude
-                // if coordinates is null → save null
-
-                temperature = weather?.temperature_2m,
-                weatherCode = weather?.weather_code
-                // if weather exists → save temperature/weathercode
-                // if weather is null → save null
-            )
-
-            // save the object even if location or weather failed
             try {
-                repository.insertWorkSession(workSession)
+
+                repository
+                    .insertWorkSession(
+                        workSession
+                    )
+
             } catch (e: Exception) {
-                _errorMessage.value = "Could not save work session."
+
+                _errorMessage.value =
+                    "Could not save work session."
             }
         }
     }
 
-    // clears an error after the user has seen it
     fun clearErrorMessage() {
-        _errorMessage.value = null
+        _errorMessage.value =
+            null
     }
 
-    // resets the timer back to zero
     fun resetTimer() {
-        if (_isRunning.value) return // prevent resetting the timer while a session is active
 
-        _elapsedSeconds.value = 0L
-        startTime = null // clear the stored session start time
+        if (_isRunning.value) {
+            return
+        }
+
+        _elapsedSeconds.value =
+            0L
+
+        _breakSeconds.value =
+            0L
+
+        startTime =
+            null
+
+        breakStartTime =
+            null
+
+        accumulatedBreakSeconds =
+            0L
+
+        sessionStateStore.clearSession()
     }
 }

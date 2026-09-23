@@ -25,10 +25,12 @@ data class WorkSession(
     val id: Long = 0, // 0 here. room generates id by autogenerate
     val startTime: Long,
     val endTime: Long,
+    val breakDurationSeconds: Long = 0,
     // Long = 64bit integer type that can later be converted to date and time (timestamps)
 
     val latitude: Double? = null, // coordinates for where the session ended
     val longitude: Double? = null, // nullable because location is optional
+    val cityName: String? = null,
 
     // optional weather data saved with the session
     val temperature: Double? = null, // nullable because weather is optional too
