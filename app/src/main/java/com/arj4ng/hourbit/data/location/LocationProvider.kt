@@ -26,7 +26,7 @@ class LocationProvider(
         LocationServices.getFusedLocationProviderClient(context) // android/google client used to access device location
     @SuppressLint("MissingPermission") // permission is checked before calling this function
 
-// get location asynchronously without blocking the UI
+    // get location asynchronously without blocking the UI
     suspend fun getCurrentLocation(): Pair<Double, Double>? { // return latitude + longitude or null if no location is available
 
         // first try the last known location
