@@ -1,24 +1,39 @@
 package com.arj4ng.hourbit.ui.navigation
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.arj4ng.hourbit.ui.history.HistoryScreen
-import com.arj4ng.hourbit.ui.home.HomeScreen
-import com.arj4ng.hourbit.ui.home.HomeViewModel
-import androidx.compose.ui.platform.LocalContext
 import com.arj4ng.hourbit.data.WorkSessionRepository
 import com.arj4ng.hourbit.data.local.DatabaseProvider
+import com.arj4ng.hourbit.data.local.SessionStateStore
 import com.arj4ng.hourbit.data.location.LocationProvider
-import com.arj4ng.hourbit.ui.home.HomeViewModelFactory
+import com.arj4ng.hourbit.data.remote.RetrofitClient
+import com.arj4ng.hourbit.ui.history.HistoryScreen
 import com.arj4ng.hourbit.ui.history.HistoryViewModel
 import com.arj4ng.hourbit.ui.history.HistoryViewModelFactory
-import com.arj4ng.hourbit.data.remote.RetrofitClient
-
+import com.arj4ng.hourbit.ui.home.HomeScreen
+import com.arj4ng.hourbit.ui.home.HomeViewModel
+import com.arj4ng.hourbit.ui.home.HomeViewModelFactory
 
 /*
   ╔════════════════════════════════════════════════════════╗
@@ -31,94 +46,221 @@ import com.arj4ng.hourbit.data.remote.RetrofitClient
   ╚═════════════════════════════════════════ [ DEV TAG ] ══╝
 */
 
-// central navigation setup for Hourbit
-// It connects each type-safe route with the screen that should be displayed
 @Composable
 fun HourbitNavHost() {
 
-    // remembers the NavController while the compose UI is active
-    // navController manages which screen is currently shown and the back stack
     val navController = rememberNavController()
 
-    // provide Android context inside Compose
     val context = LocalContext.current
 
-    // get the reusable Room database instance
-    val database = DatabaseProvider.getDatabase(context)
+    val database =
+        DatabaseProvider.getDatabase(context)
 
-    // repository gets local Room access and remote weather API access
-    val repository = WorkSessionRepository(
-        database.workSessionDao(),
-        RetrofitClient.weatherApi // provide the retrofit WeatherApi implementation
-    )
+    val repository =
+        WorkSessionRepository(
+            database.workSessionDao(),
+            RetrofitClient.weatherApi
+        )
 
-    // give LocationProvider access to the android context
-    val locationProvider = LocationProvider(context)
+    val locationProvider =
+        LocationProvider(context)
 
-    // factory can now create HomeViewModel with the repository
-    val factory = HomeViewModelFactory(
-        repository,
-        locationProvider
-    )
+    val sessionStateStore =
+        SessionStateStore(context)
 
-    // create or return the HomeViewModel for this screen
-    val homeViewModel: HomeViewModel = viewModel(
-        factory = factory
-    )
+    val homeFactory =
+        HomeViewModelFactory(
+            repository,
+            locationProvider,
+            sessionStateStore
+        )
 
-    // observe the ViewModel state and converts it into compose state
-    val elapsedSeconds by homeViewModel.elapsedSeconds.collectAsStateWithLifecycle() // use my state flow from viewmodel with compose
-    // so if state changes.. ui changes automatically
-    val isRunning by homeViewModel.isRunning.collectAsStateWithLifecycle()
+    val homeViewModel: HomeViewModel =
+        viewModel(
+            factory = homeFactory
+        )
 
-    // observe optional error messages from HomeViewModel
-    val errorMessage by homeViewModel.errorMessage.collectAsStateWithLifecycle()
+    val elapsedSeconds by
+        homeViewModel.elapsedSeconds
+            .collectAsStateWithLifecycle()
 
-    // creates HistoryViewModel with the repository
-    val historyFactory = HistoryViewModelFactory(repository)
+    val isRunning by
+        homeViewModel.isRunning
+            .collectAsStateWithLifecycle()
 
-    // gets the HistoryViewModel using the custom factory
-    val historyViewModel: HistoryViewModel = viewModel(
-        factory = historyFactory
-    )
+    val isOnBreak by
+        homeViewModel.isOnBreak
+            .collectAsStateWithLifecycle()
 
-    // observes saved sessions from the ViewModel
-    val workSessions by historyViewModel.workSessions.collectAsStateWithLifecycle()
+    val breakSeconds by
+        homeViewModel.breakSeconds
+            .collectAsStateWithLifecycle()
 
+    val errorMessage by
+        homeViewModel.errorMessage
+            .collectAsStateWithLifecycle()
 
+    val historyFactory =
+        HistoryViewModelFactory(repository)
 
-    // NavHost is the container that displays the current navigation destination
-    // Hourbit starts on HomeRoute when the app is opened
-    NavHost(
-        navController = navController,
-        startDestination = HomeRoute
-    ) {
+    val historyViewModel: HistoryViewModel =
+        viewModel(
+            factory = historyFactory
+        )
 
-        // connects HomeRoute to HomeScreen
-        composable<HomeRoute> {
-            HomeScreen(
-                elapsedSeconds = elapsedSeconds,
-                isRunning = isRunning,
-                onStartTimer = homeViewModel::startTimer, // pass the startTimer function as the callback
-                onStopTimer = homeViewModel::stopTimer,
-                onResetTimer = homeViewModel::resetTimer,
-                onOpenHistory = {
-                    navController.navigate(HistoryRoute)
-                },
-                errorMessage = errorMessage,
-                onDismissError = homeViewModel::clearErrorMessage
-            )
+    val workSessions by
+        historyViewModel.workSessions
+            .collectAsStateWithLifecycle()
+
+    val navBackStackEntry by
+        navController.currentBackStackEntryAsState()
+
+    val currentDestination =
+        navBackStackEntry?.destination
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+
+            NavigationBar(
+                containerColor =
+                    MaterialTheme.colorScheme.background,
+                tonalElevation = 0.dp
+            ) {
+
+                NavigationBarItem(
+                    selected =
+                        currentDestination
+                            ?.hasRoute<HomeRoute>() == true,
+                    onClick = {
+
+                        navController.navigate(
+                            HomeRoute
+                        ) {
+                            popUpTo<HomeRoute> {
+                                inclusive = false
+                            }
+
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Home,
+                            contentDescription = "Home"
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = "Home"
+                        )
+                    },
+                    colors =
+                        NavigationBarItemDefaults.colors(
+                            selectedIconColor =
+                                MaterialTheme.colorScheme.primary,
+                            selectedTextColor =
+                                MaterialTheme.colorScheme.primary,
+                            indicatorColor =
+                                MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor =
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor =
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                )
+
+                NavigationBarItem(
+                    selected =
+                        currentDestination
+                            ?.hasRoute<HistoryRoute>() == true,
+                    onClick = {
+
+                        navController.navigate(
+                            HistoryRoute
+                        ) {
+                            popUpTo<HomeRoute> {
+                                saveState = true
+                            }
+
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "History"
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = "History"
+                        )
+                    },
+                    colors =
+                        NavigationBarItemDefaults.colors(
+                            selectedIconColor =
+                                MaterialTheme.colorScheme.primary,
+                            selectedTextColor =
+                                MaterialTheme.colorScheme.primary,
+                            indicatorColor =
+                                MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor =
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor =
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                )
+            }
         }
+    ) { innerPadding ->
 
+        NavHost(
+            navController = navController,
+            startDestination = HomeRoute,
+            modifier =
+                Modifier.padding(innerPadding)
+        ) {
 
-        // connects HistoryRoute to HistoryScreen
-        composable<HistoryRoute> {
-            HistoryScreen(
-                workSessions = workSessions,
-                onBack = {
-                    navController.popBackStack()
-                }
-            )
+            composable<HomeRoute> {
+
+                HomeScreen(
+                    elapsedSeconds =
+                        elapsedSeconds,
+                    breakSeconds =
+                        breakSeconds,
+                    isRunning =
+                        isRunning,
+                    isOnBreak =
+                        isOnBreak,
+                    onStartTimer =
+                        homeViewModel::startTimer,
+                    onStopTimer =
+                        homeViewModel::stopTimer,
+                    onStartBreak =
+                        homeViewModel::startBreak,
+                    onResumeWork =
+                        homeViewModel::resumeWork,
+                    onResetTimer =
+                        homeViewModel::resetTimer,
+                    errorMessage =
+                        errorMessage,
+                    onDismissError =
+                        homeViewModel::clearErrorMessage
+                )
+            }
+
+            composable<HistoryRoute> {
+
+                HistoryScreen(
+                    workSessions =
+                        workSessions,
+                    onDeleteSession =
+                        historyViewModel::deleteWorkSession
+                )
+            }
         }
     }
 }

@@ -1,58 +1,103 @@
 package com.arj4ng.hourbit.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+// Dark text placed on the light-blue primary color
+private val ColorDarkPrimaryText =
+    androidx.compose.ui.graphics.Color(0xFF102052)
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = HourbitBlue,
+    onPrimary = LightSurface,
+
+    primaryContainer = LightPrimaryContainer,
+    onPrimaryContainer = LightOnPrimaryContainer,
+
+    secondary = LightTextSecondary,
+    onSecondary = LightSurface,
+
+    secondaryContainer = LightSurfaceVariant,
+    onSecondaryContainer = LightText,
+
+    tertiary = HourbitAmber,
+    onTertiary = LightSurface,
+
+    tertiaryContainer = LightBreakContainer,
+    onTertiaryContainer = LightOnBreakContainer,
+
+    background = LightBackground,
+    onBackground = LightText,
+
+    surface = LightSurface,
+    onSurface = LightText,
+
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = LightTextSecondary,
+
+    outline = LightOutline,
+    outlineVariant = LightOutline,
+
+    error = HourbitError,
+    onError = LightSurface
+)
+
+private val DarkColorScheme = darkColorScheme(
+
+    primary = HourbitBlueDark,
+    onPrimary = ColorDarkPrimaryText,
+
+    primaryContainer = DarkPrimaryContainer,
+    onPrimaryContainer = DarkOnPrimaryContainer,
+
+    secondary = DarkTextSecondary,
+    onSecondary = DarkBackground,
+
+    secondaryContainer = DarkSurfaceVariant,
+    onSecondaryContainer = DarkText,
+
+    tertiary = HourbitAmberDark,
+    onTertiary = DarkBackground,
+
+    tertiaryContainer = DarkBreakContainer,
+    onTertiaryContainer = DarkOnBreakContainer,
+
+    background = DarkBackground,
+    onBackground = DarkText,
+
+    surface = DarkSurface,
+    onSurface = DarkText,
+
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkTextSecondary,
+
+    outline = DarkOutline,
+    outlineVariant = DarkOutline,
+
+    error = HourbitErrorDark,
+    onError = DarkBackground
 )
 
 @Composable
 fun HourbitTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+
+    val colors =
+        if (darkTheme) {
+            DarkColorScheme
+        } else {
+            LightColorScheme
         }
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
+        colorScheme = colors,
+        typography = HourbitTypography,
         content = content
     )
 }
