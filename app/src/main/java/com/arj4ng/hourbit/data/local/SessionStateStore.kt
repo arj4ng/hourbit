@@ -1,6 +1,7 @@
 package com.arj4ng.hourbit.data.local
 
 import android.content.Context
+import com.arj4ng.hourbit.widget.HourbitWidgetProvider
 
 
 /*
@@ -15,13 +16,16 @@ import android.content.Context
 */
 
 
-// stores the active timer state so it survives app restarts
+// store the active timer state so it survives app restarts
 class SessionStateStore(
     context: Context
 ) {
 
+    private val appContext =
+        context.applicationContext
+
     private val preferences =
-        context.getSharedPreferences(
+        appContext.getSharedPreferences(
             "hourbit_session_state",
             Context.MODE_PRIVATE
         )
@@ -52,6 +56,8 @@ class SessionStateStore(
                 true
             )
             .apply()
+
+        updateWidget()
     }
 
     fun updateBreak(
@@ -74,6 +80,8 @@ class SessionStateStore(
                 isOnBreak
             )
             .apply()
+
+        updateWidget()
     }
 
     fun isRunning(): Boolean =
@@ -106,9 +114,18 @@ class SessionStateStore(
             false
         )
 
+
+    fun updateWidget() {
+        HourbitWidgetProvider.updateAllWidgets(
+            appContext
+        )
+    }
+
     fun clearSession() {
         preferences.edit()
             .clear()
             .apply()
+
+        updateWidget()
     }
 }

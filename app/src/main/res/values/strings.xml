@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Hourbit</string>
+    <string name="widget_description">Current Hourbit work session</string>
 </resources>
