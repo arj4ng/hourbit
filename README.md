@@ -132,6 +132,32 @@ The application was developed as an Android final project with a focus on clean 
 
 </td>
 </tr>
+
+<tr>
+<td width="50%" valign="top">
+
+### 📱 Home-screen widget
+
+- Interactive Android home-screen widget
+- Live work timer
+- Live break timer
+- Start, break and resume controls
+- Shared active-session state with the app
+- Quick access back into Hourbit
+
+</td>
+<td width="50%" valign="top">
+
+### 🔄 Session continuity
+
+- Widget and app use the same persisted session state
+- Work time is reconstructed from timestamps
+- Break time remains separate from focused work
+- Session completion stays in the app workflow
+- Completed sessions remain the responsibility of Room
+
+</td>
+</tr>
 </table>
 
 ---
@@ -162,6 +188,17 @@ Hourbit follows an **MVVM architecture with a Repository layer**.
 │    Room     │  │  Retrofit   │
 │ Local data  │  │ Open-Meteo  │
 └─────────────┘  └─────────────┘
+
+┌───────────────────────┐
+│   Home-screen Widget  │
+│     RemoteViews       │
+└───────────┬───────────┘
+            │
+            ▼
+┌───────────────────────┐
+│   SessionStateStore   │
+│   SharedPreferences   │
+└───────────────────────┘
 ```
 
 The UI does not directly access Room or the weather API.
@@ -215,6 +252,24 @@ While a session is active, Hourbit stores:
 This temporary state is stored with `SharedPreferences` through `SessionStateStore`.
 
 Completed sessions are stored separately in Room.
+
+---
+
+## 📱 Home-screen widget
+
+Hourbit includes an interactive Android home-screen widget built with `AppWidgetProvider` and `RemoteViews`.
+
+The widget uses the same persisted active-session state as the main application and provides quick access to the current session without requiring Hourbit to remain open.
+
+Depending on the current state, the widget can display:
+
+- **Ready** — start a new work session
+- **Focusing** — show a live work timer and start a break
+- **On break** — freeze the work timer, show a live break timer and resume work
+
+The widget reconstructs elapsed time from timestamps instead of maintaining a separate counter. This keeps its timer consistent with Hourbit's timer design.
+
+Finishing a session returns the user to Hourbit, where the normal completion flow can retrieve optional location and weather information before storing the completed session in Room.
 
 ---
 
@@ -304,11 +359,11 @@ Weather is requested only when coordinates are available. If the request fails, 
 
 ## 📅 History experience
 
-The History screen is centered around a swipeable **seven-day calendar**.
+The History screen is centered around a swipeable **weekly calendar** running from Monday to Sunday.
 
 <div align="center">
 
-`Recent 7 days` → swipe → `Previous 7 days` → swipe → `Earlier weeks`
+`Current week` → swipe → `Previous week` → swipe → `Earlier weeks`
 
 </div>
 
@@ -415,6 +470,7 @@ The bottom navigation switches directly between the two main sections without ma
 | State | StateFlow / Flow |
 | Concurrency | Kotlin Coroutines |
 | Active session state | SharedPreferences |
+| Home-screen widget | AppWidgetProvider + RemoteViews |
 | Build system | Gradle Kotlin DSL |
 
 ---
@@ -453,6 +509,9 @@ com.arj4ng.hourbit
 │   │
 │   ├── navigation
 │   └── theme
+│
+├── widget
+│   └── HourbitWidgetProvider
 │
 └── MainActivity
 ```
@@ -522,6 +581,8 @@ The project demonstrates:
 - type-safe navigation
 - error handling
 - persistent application state
+- interactive Android home-screen widget
+- AppWidgetProvider and RemoteViews
 - custom light and dark themes
 
 ---
